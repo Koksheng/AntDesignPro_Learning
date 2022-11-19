@@ -127,3 +127,45 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
 export const request = {
   ...errorConfig,
 };
+
+// const errorHandler = (error: ResponseError) => {
+//   switch (error.name) {
+//     case 'BizError':
+//       if (error.data.message) {
+//         message.error({
+//           content: error.data.message,
+//           key: 'process',
+//           duration: 20,
+//         });
+//       } else {
+//         message.error({
+//           content: 'Business Error, please try again.',
+//           key: 'process',
+//           duration: 20,
+//         });
+//       }
+//       break;
+//     case 'ResponseError':
+//       message.error({
+//         content: `${error.response.status} ${error.response.statusText}. Please try again.`,
+//         key: 'process',
+//         duration: 20,
+//       });
+//       break;
+//     case 'TypeError':
+//       message.error({
+//         content: `Network error. Please try again.`,
+//         key: 'process',
+//         duration: 20,
+//       });
+//       break;
+//     default:
+//       break;
+//   }
+
+//   throw error;
+// };
+
+// export const request: RequestConfig = {
+//   errorHandler,
+// };
