@@ -45,7 +45,7 @@ const Modal = ({
       manual: true,
       onSuccess: (data) => {
         message.success({
-          content: data.message,
+          content: data?.message,
           key: 'process',
         });
         hideModal(true);
@@ -102,8 +102,9 @@ const Modal = ({
         onCancel={() => {
           hideModal();
         }}
-        footer={ActionBuilder(init?.data?.layout?.actions[0]?.data, actionHandler, request.loading)}
+        footer={ActionBuilder(init?.data?.layout?.actions[0]?.data, actionHandler, request?.loading)}
         maskClosable={false}
+        forceRender
       >
         {init?.loading ? (
           <Spin className={styles.formSpin} tip="Loading..." />

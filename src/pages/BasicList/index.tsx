@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Row, Col, Card, Pagination, Space, Modal as AntdModal, message } from 'antd';
-import { useRequest } from 'umi'; //'@umijs/max';
+import { Table, Row, Col, Card, Pagination, Space, Modal as AntdModal, message, Button } from 'antd';
+import { useRequest, useIntl } from 'umi'; //'@umijs/max';
+import { useSessionStorageState } from 'ahooks';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import ColumnBuilder from './builder/ColumnBuilder';
 import ActionBuilder from './builder/ActionBuilder';
 import Modal from './component/Modal';
 import styles from './index.less';
+import { selectors } from '@playwright/test';
 
 const Index = () => {
-  const [page, setPage] = useState(1);
-  const [per_page, setPerPage] = useState(10);
+  const [pageQuery, setPageQuery] = useState('');
   const [sortQuery, setSortQuery] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalUri, setModalUri] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [tableColumns, setTableColumns] = useState<BasicListApi.Field[]>([]);
+  const [tableColumns, setTableColumns] = useSessionStorageState<BasicListApi.Field[]>('basicListTableColumns',[]);
   const { confirm } = AntdModal;
+  const lang = useIntl();
 
   const init = useRequest<{ data: BasicListApi.ListData }>(
-    `https://public-api-v2.aspirantzhang.com/api/admins?X-API-KEY=antd&page=${page}&per_page=${per_page}${sortQuery}`,
+    `https://public-api-v2.aspirantzhang.com/api/admins?X-API-KEY=antd${pageQuery}${sortQuery}`,
   );
 
   // const init = useRequest(
@@ -44,7 +46,7 @@ const Index = () => {
       manual: true,
       onSuccess: (data) => {
         message.success({
-          content: data.message,
+          content: data?.message,
           key: 'process',
         });
       },
@@ -56,7 +58,7 @@ const Index = () => {
 
   useEffect(() => {
     init.run();
-  }, [page, per_page, sortQuery]);
+  }, [pageQuery, sortQuery]);
 
   useEffect(() => {
     if (init?.data?.layout?.tableColumn) {
@@ -64,58 +66,107 @@ const Index = () => {
     }
   }, [init?.data?.layout?.tableColumn]);
 
-  const searchLayout = () => {};
+  useEffect(() => {
+    if (modalUri) {
+      setModalVisible(true);
+    }
+  }, [modalUri]);
 
-  const batchOverview = () => {
-    return (
-      <Table
-        size="small"
-        rowKey="id"
-        columns={[tableColumns[0] || {}, tableColumns[1] || {}]}
-        dataSource={selectedRows}
-        pagination={false}
-      />
-    );
-  };
-
-  function actionHandler(action: BasicListApi.Action, record: any) {
+  function actionHandler(action: BasicListApi.Action, record: BasicListApi.Field) {
     switch (action.action) {
       case 'modal':
         setModalUri(
-          action.uri?.replace(/:\w+/g, (field) => {
+          (action.uri || '').replace(/:\w+/g, (field) => {
             return record[field.replace(':', '')];
-          }) as string,
+          }),
         );
-        setModalVisible(true);
         break;
       case 'reload':
           init.run();
           break;
       case 'delete':
-        confirm({
-          title: 'Are you sure delete this task?',
-          icon: <ExclamationCircleOutlined />,
-          content: batchOverview(),
-          okText: 'Sure to Delete!!!',
-          okType: 'danger',
-          cancelText: 'Cancel',
-          onOk() {
-            return request.run({
-              uri: action.uri,
-              method: action.method,
-              type: 'delete',
-              ids: selectedRowKeys,
-            });
-          },
-          onCancel() {
-            console.log('Cancel');
-          },
-        });
+      case 'deletePermanently':
+      case 'restore':
+        
+          const operationName = lang.formatMessage({
+            id: `basic-list.list.actionHandler.operation.${action.action}`,
+          });
+          confirm({
+            title: lang.formatMessage(
+              {
+                id: 'basic-list.list.actionHandler.confirmTitle',
+              },
+              {
+                operationName,
+              },
+            ),
+            icon: <ExclamationCircleOutlined />,
+            content: batchOverview(Object.keys(record || {}).length ? [record] : selectedRows),
+            okText: `Sure to ${action.action}!!!`,
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk() {
+              return request.run({
+                uri: action.uri,
+                method: action.method,
+                type: action.action,
+                ids: Object.keys(record || {}).length ? [record.id] : selectedRowKeys,
+              });
+            },
+            onCancel() {
+              console.log('Cancel');
+            },
+          });
+        
         break;
       default:
         break;
     }
   }
+
+  function batchOverview(dataSource: BasicListApi.Field[]) {
+    return (
+      <Table
+        size="small"
+        rowKey="id"
+        columns={tableColumns ? [tableColumns[0] || {}, tableColumns[1] || {}] : []}
+        dataSource={dataSource}
+        pagination={false}
+      />
+    );
+  };
+
+  const paginationChangeHandler = (page: any, per_page: any) => {
+    setPageQuery(`&page=${page}&per_page=${per_page}`);
+  };
+
+  const tableChangeHandler = (_: any, __: any, sorter: any) => {
+    if (sorter.order === undefined) {
+      setSortQuery('');
+    } else {
+      const orderBy = sorter.order === 'ascend' ? 'asc' : 'desc';
+      setSortQuery(`&sort=${sorter.field}&order=${orderBy}`);
+    }
+  };
+
+  const hideModal = (reload = false) => {
+    setModalVisible(false);
+    setModalUri('');
+    if (reload) {
+      init.run();
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (_selectedRowKeys: any, _selectedRows: any) => {
+      setSelectedRowKeys(_selectedRowKeys);
+      setSelectedRows(_selectedRows);
+    },
+  };
+
+  const searchLayout = () => {};
+  
   const beforeTableLayout = () => {
     return (
       <Row>
@@ -128,18 +179,7 @@ const Index = () => {
       </Row>
     );
   };
-  const paginationChangeHandler = (_page: any, _per_page: any) => {
-    setPage(_page);
-    setPerPage(_per_page);
-  };
-  const tableChangeHandler = (_: any, __: any, sorter: any) => {
-    if (sorter.order === undefined) {
-      setSortQuery('');
-    } else {
-      const orderBy = sorter.order === 'ascend' ? 'asc' : 'desc';
-      setSortQuery(`&sort=${sorter.field}&order=${orderBy}`);
-    }
-  };
+  
   const afterTableLayout = () => {
     return (
       <Row>
@@ -162,21 +202,6 @@ const Index = () => {
     );
   };
 
-  const hideModal = (reload = false) => {
-    setModalVisible(false);
-    if (reload) {
-      init.run();
-    }
-  };
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (_selectedRowKeys: any, _selectedRows: any) => {
-      setSelectedRowKeys(_selectedRowKeys);
-      setSelectedRows(_selectedRows);
-    },
-  };
-
   const batchToolbar = () => {
     return (
       selectedRowKeys.length > 0 && (
@@ -184,8 +209,6 @@ const Index = () => {
       )
     );
   };
-
-
 
   return (
     <PageContainer>
@@ -197,7 +220,7 @@ const Index = () => {
           dataSource={init?.data?.dataSource}
           columns={tableColumns}
           pagination={false}
-          loading={init.loading}
+          loading={init?.loading}
           onChange={tableChangeHandler}
           rowSelection={rowSelection}
         />
