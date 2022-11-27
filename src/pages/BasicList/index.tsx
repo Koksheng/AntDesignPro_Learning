@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Row, Col, Card, Pagination, Space, Modal as AntdModal, message, Button } from 'antd';
-import { useRequest, useIntl } from 'umi'; //'@umijs/max';
+import { Table, Row, Col, Card, Pagination, Space, Modal as AntdModal, message } from 'antd';
+import { useRequest, useIntl, useNavigate } from 'umi'; //'@umijs/max';
 import { useSessionStorageState } from 'ahooks';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
@@ -8,7 +8,6 @@ import ColumnBuilder from './builder/ColumnBuilder';
 import ActionBuilder from './builder/ActionBuilder';
 import Modal from './component/Modal';
 import styles from './index.less';
-import { selectors } from '@playwright/test';
 
 const Index = () => {
   const [pageQuery, setPageQuery] = useState('');
@@ -20,6 +19,7 @@ const Index = () => {
   const [tableColumns, setTableColumns] = useSessionStorageState<BasicListApi.Field[]>('basicListTableColumns',[]);
   const { confirm } = AntdModal;
   const lang = useIntl();
+  const history = useNavigate();
 
   const init = useRequest<{ data: BasicListApi.ListData }>(
     `https://public-api-v2.aspirantzhang.com/api/admins?X-API-KEY=antd${pageQuery}${sortQuery}`,
@@ -81,13 +81,19 @@ const Index = () => {
           }),
         );
         break;
+      case 'page': {
+          const uri = (action.uri || '').replace(/:\w+/g, (field) => {
+            return record[field.replace(':', '')];
+          });
+          history(`/basic-list${uri}`);
+          break;
+        }
       case 'reload':
           init.run();
           break;
       case 'delete':
       case 'deletePermanently':
-      case 'restore':
-        
+      case 'restore': {
           const operationName = lang.formatMessage({
             id: `basic-list.list.actionHandler.operation.${action.action}`,
           });
@@ -101,7 +107,7 @@ const Index = () => {
               },
             ),
             icon: <ExclamationCircleOutlined />,
-            content: batchOverview(Object.keys(record || {}).length ? [record] : selectedRows),
+            content: batchOverview(Object.keys(record).length ? [record] : selectedRows),
             okText: `Sure to ${action.action}!!!`,
             okType: 'danger',
             cancelText: 'Cancel',
@@ -110,15 +116,13 @@ const Index = () => {
                 uri: action.uri,
                 method: action.method,
                 type: action.action,
-                ids: Object.keys(record || {}).length ? [record.id] : selectedRowKeys,
+                ids: Object.keys(record).length ? [record.id] : selectedRowKeys,
               });
             },
-            onCancel() {
-              console.log('Cancel');
-            },
+            onCancel() {},
           });
-        
-        break;
+          break;
+        }
       default:
         break;
     }
