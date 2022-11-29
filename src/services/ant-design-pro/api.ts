@@ -12,6 +12,14 @@ export async function currentUser(options?: { [key: string]: any }) {
   });
 }
 
+/** 获取当前的用户 GET /api/currentMenu */
+export async function currentMenu(options?: { [key: string]: any }) {
+  return request('https://public-api-v2.aspirantzhang.com/api/menus/backend', {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
 /** 退出登录接口 POST /api/login/outLogin */
 export async function outLogin(options?: { [key: string]: any }) {
   return request<Record<string, any>>('/api/login/outLogin', {

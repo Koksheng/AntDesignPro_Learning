@@ -127,11 +127,11 @@ const Page = () => {
             extra={
               <Tag>
                 Update Time:
-                {moment(form.getFieldValue('update_time')).format('YYYY-MM-DD HH:mm:ss')}
+                {moment(form?.getFieldValue('update_time')).format('YYYY-MM-DD HH:mm:ss')}
               </Tag>
             }
           >
-            {ActionBuilder(init?.data?.layout?.actions[0].data, actionHandler)}
+            {ActionBuilder(init?.data?.layout?.actions[0]?.data, actionHandler)}
           </FooterToolbar>
           <Form.Item name="uri" key="uri" hidden>
             <Input />
