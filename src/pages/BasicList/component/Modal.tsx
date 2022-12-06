@@ -53,6 +53,7 @@ const Modal = ({
       formatResult: (res: any) => {
         return res;
       },
+      throttleInterval: 1000,
     },
   );
 

@@ -13,8 +13,8 @@ import {
   Form,
   InputNumber,
 } from 'antd';
-import { useRequest, useIntl, useNavigate, useLocation } from 'umi'; //'@umijs/max';
-import { useSessionStorageState, useToggle } from 'ahooks';
+import { useRequest, useIntl, useNavigate, useLocation, history } from 'umi'; //'@umijs/max';
+import { useSessionStorageState, useToggle, useUpdateEffect } from 'ahooks';
 import { stringify } from 'query-string';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import QueueAnim from 'rc-queue-anim';
@@ -37,7 +37,7 @@ const Index = () => {
   const [searchVisible, searchAction] = useToggle(false);
   const { confirm } = AntdModal;
   const lang = useIntl();
-  const history = useNavigate();
+  // const history = useNavigate();
   const [searchForm] = Form.useForm();
   const location = useLocation();
 
@@ -85,7 +85,7 @@ const Index = () => {
     },
   );
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     init.run();
   }, [pageQuery, sortQuery, location.pathname]);
 
@@ -114,7 +114,7 @@ const Index = () => {
           const uri = (action.uri || '').replace(/:\w+/g, (field) => {
             return record[field.replace(':', '')];
           });
-          history(`/basic-list${uri}`);
+          history.push(`/basic-list${uri}`);
           break;
         }
       case 'reload':

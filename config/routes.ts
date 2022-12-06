@@ -31,6 +31,7 @@ export default [
     name: 'admin',
     icon: 'crown',
     access: 'canAdmin',
+    
     routes: [
       {
         path: '/admin',
@@ -50,6 +51,8 @@ export default [
     component: './TableList',
   },
   {
+    name: 'single-page',
+    icon: 'table',
     path: '/basic-list/api/*/*',
     component: './BasicList/component/Page',
   },

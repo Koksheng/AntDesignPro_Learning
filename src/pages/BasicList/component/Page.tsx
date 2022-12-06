@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Form, Input, message, Tag, Spin, Row, Col, Tabs, Card, Space } from 'antd';
-import { useRequest, useLocation, useNavigate } from 'umi';
+import { useRequest, useLocation, history } from 'umi';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import moment from 'moment';
 import FormBuilder from '../builder/FormBuilder';
@@ -12,7 +12,6 @@ const Page = () => {
   const [form] = Form.useForm();
   const { TabPane } = Tabs;
   const location = useLocation();
-  const history = useNavigate();
 
   const init = useRequest<{ data: BasicListApi.PageData }>(
     `https://public-api-v2.aspirantzhang.com${location.pathname.replace(
@@ -21,7 +20,7 @@ const Page = () => {
     )}?X-API-KEY=antd`,
     {
       onError: () => {
-        history(-1);
+        history.goBack();
       },
     },
   );
@@ -45,7 +44,7 @@ const Page = () => {
           content: data.message,
           key: 'process',
         });
-        history(-1);
+        history.goBack();
       },
       formatResult: (res: any) => {
         return res;
@@ -66,7 +65,7 @@ const Page = () => {
         form.submit();
         break;
       case 'cancel':
-        history(-1);
+        history.goBack();
         break;
       case 'reset':
         form.resetFields();
@@ -127,11 +126,11 @@ const Page = () => {
             extra={
               <Tag>
                 Update Time:
-                {moment(form?.getFieldValue('update_time')).format('YYYY-MM-DD HH:mm:ss')}
+                {moment(form.getFieldValue('update_time')).format('YYYY-MM-DD HH:mm:ss')}
               </Tag>
             }
           >
-            {ActionBuilder(init?.data?.layout?.actions[0]?.data, actionHandler)}
+            {ActionBuilder(init?.data?.layout?.actions[0].data, actionHandler)}
           </FooterToolbar>
           <Form.Item name="uri" key="uri" hidden>
             <Input />
