@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Form, Input, message, Tag, Spin, Row, Col, Tabs, Card, Space } from 'antd';
 import { useRequest, useLocation, history } from 'umi';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
@@ -14,10 +14,10 @@ const Page = () => {
   const location = useLocation();
 
   const init = useRequest<{ data: BasicListApi.PageData }>(
-    `https://public-api-v2.aspirantzhang.com${location.pathname.replace(
+    `${location.pathname.replace(
       '/basic-list',
       '',
-    )}?X-API-KEY=antd`,
+    )}`,
     {
       onError: () => {
         history.goBack();
@@ -29,11 +29,10 @@ const Page = () => {
       message.loading({ content: 'Processing...', key: 'process', duration: 0 });
       const { uri, method, ...formValues } = values;
       return {
-        url: `https://public-api-v2.aspirantzhang.com${uri}`,
+        url: `${uri}`,
         method,
         data: {
           ...submitFieldsAdaptor(formValues),
-          'X-API-KEY': 'antd',
         },
       };
     },
@@ -49,6 +48,7 @@ const Page = () => {
       formatResult: (res: any) => {
         return res;
       },
+      throttleInterval: 1000,
     },
   );
 

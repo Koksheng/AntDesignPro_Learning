@@ -14,7 +14,7 @@ import {
   InputNumber,
 } from 'antd';
 import { useRequest, useIntl, useNavigate, useLocation, history } from 'umi'; //'@umijs/max';
-import { useSessionStorageState, useToggle, useUpdateEffect } from 'ahooks';
+import { useToggle, useUpdateEffect } from 'ahooks';
 import { stringify } from 'query-string';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import QueueAnim from 'rc-queue-anim';
@@ -33,7 +33,6 @@ const Index = () => {
   const [modalUri, setModalUri] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [tableColumns, setTableColumns] = useSessionStorageState<BasicListApi.Field[]>('basicListTableColumns',[]);
   const [searchVisible, searchAction] = useToggle(false);
   const { confirm } = AntdModal;
   const lang = useIntl();
@@ -42,17 +41,30 @@ const Index = () => {
   const location = useLocation();
 
   const init = useRequest<{ data: BasicListApi.ListData }>((values: any) => {
+    if (values === true) {
+      return {
+        url: `${location.pathname.replace('/basic-list', '')}`,
+      };
+    }
     return {
-      url: `https://public-api-v2.aspirantzhang.com${location.pathname.replace(
+      url: `${location.pathname.replace(
         '/basic-list',
         '',
-      )}?X-API-KEY=antd${pageQuery}${sortQuery}`,
+      )}?${pageQuery}${sortQuery}`,
       params: values,
       paramsSerializer: (params: any) => {
         return stringify(params, { arrayFormat: 'comma', skipEmptyString: true, skipNull: true });
       },
     };
-  });
+  },
+  {
+    onSuccess: () => {
+      setSelectedRowKeys([]);
+      setSelectedRows([]);
+    },
+  },
+  
+  );
 
   // const init = useRequest(
   //     'https://public-api-v2.aspirantzhang.com/api/admins?X-API-KEY=antd&page=${page}&per_page=${per_page}');
@@ -63,21 +75,21 @@ const Index = () => {
       message.loading({ content: 'Processing...', key: 'process', duration: 0 });
       const { uri, method, ...formValues } = values;
       return {
-        url: `https://public-api-v2.aspirantzhang.com${uri}`,
+        url: `${uri}`,
         method,
         data: {
           ...formValues,
-          'X-API-KEY': 'antd',
         },
       };
     },
     {
       manual: true,
-      onSuccess: (data) => {
+      onSuccess: (data: BasicListApi.Root) => {
         message.success({
           content: data?.message,
           key: 'process',
         });
+        init.run();
       },
       formatResult: (res: any) => {
         return res;
@@ -87,13 +99,11 @@ const Index = () => {
 
   useUpdateEffect(() => {
     init.run();
-  }, [pageQuery, sortQuery, location.pathname]);
+  }, [pageQuery, sortQuery]);
 
-  useEffect(() => {
-    if (init?.data?.layout?.tableColumn) {
-      setTableColumns(ColumnBuilder(init?.data?.layout?.tableColumn, actionHandler));
-    }
-  }, [init?.data?.layout?.tableColumn]);
+  useUpdateEffect(() => {
+    init.run(true);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (modalUri) {
@@ -158,11 +168,12 @@ const Index = () => {
   }
 
   function batchOverview(dataSource: BasicListApi.Field[]) {
+    const tableColumns = ColumnBuilder(init?.data?.layout?.tableColumn, actionHandler);
     return (
       <Table
         size="small"
         rowKey="id"
-        columns={tableColumns ? [tableColumns[0] || {}, tableColumns[1] || {}] : []}
+        columns={[tableColumns[0] || {}, tableColumns[1] || {}]}
         dataSource={dataSource}
         pagination={false}
       />
@@ -206,35 +217,39 @@ const Index = () => {
     return (
       <QueueAnim type="top">
         {searchVisible ? (
-          <Card className={styles.searchForm} key="searchForm">
-          <Form onFinish={onFinish} form={searchForm}>
-            <Row gutter={24}>
-              <Col sm={6}>
-                <Form.Item label="ID" name="id" key="id">
-                  <InputNumber style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              {SearchBuilder(init.data?.layout.tableColumn)}
-            </Row>
-            <Row>
-              <Col sm={24} className={styles.textAlignRight}>
-                <Space>
-                  <Button type="primary" htmlType="submit">
-                    Submit
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      init.run();
-                      searchForm.resetFields();
-                    }}
-                  >
-                    Clear
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
+          <div key="searchForm">
+            <Card className={styles.searchForm} key="searchForm">
+            <Form onFinish={onFinish} form={searchForm}>
+              <Row gutter={24}>
+                <Col sm={6}>
+                  <Form.Item label="ID" name="id" key="id">
+                    <InputNumber style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                {SearchBuilder(init.data?.layout.tableColumn)}
+              </Row>
+              <Row>
+                <Col sm={24} className={styles.textAlignRight}>
+                  <Space>
+                    <Button type="primary" htmlType="submit">
+                      Submit
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        init.run();
+                        searchForm.resetFields();
+                        setSelectedRowKeys([]);
+                        setSelectedRows([]);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </Space>
+                </Col>
+              </Row>
+            </Form>
+          </Card>
+        </div>
       ) : null}
     </QueueAnim>
   );
@@ -303,7 +318,7 @@ const Index = () => {
         <Table
           rowKey="id"
           dataSource={init?.data?.dataSource}
-          columns={tableColumns}
+          columns={ColumnBuilder(init?.data?.layout?.tableColumn, actionHandler)}
           pagination={false}
           loading={init?.loading}
           onChange={tableChangeHandler}

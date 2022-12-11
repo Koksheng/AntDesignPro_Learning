@@ -1,6 +1,6 @@
 import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
-import type { Settings as LayoutSettings } from '@ant-design/pro-components';
+import type { Settings as LayoutSettings, MenuDataItem } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
@@ -17,16 +17,18 @@ const loginPath = '/user/login';
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
   currentUser?: API.CurrentUser;
-  currentMenu?: any;
+  currentMenu?: MenuDataItem[];
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
+  fetchMenu?: () => Promise<MenuDataItem[] | undefined>;
 }> {
   const fetchUserInfo = async () => {
     try {
       const msg = await queryCurrentUser({
         skipErrorHandler: true,
       });
-      return msg.data;
+      return msg;
+      // return msg.data;
     } catch (error) {
       history.push(loginPath);
     }
@@ -47,6 +49,7 @@ export async function getInitialState(): Promise<{
     const currentMenu = await fetchMenu();
     return {
       fetchUserInfo,
+      fetchMenu,
       currentUser,
       currentMenu,
       settings: defaultSettings,
@@ -54,6 +57,7 @@ export async function getInitialState(): Promise<{
   }
   return {
     fetchUserInfo,
+    fetchMenu,
     settings: defaultSettings,
   };
 }
@@ -103,7 +107,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     //   : [],
     menuHeaderRender: undefined,
     menuDataRender: () => {
-      return initialState?.currentMenu;
+      return initialState?.currentMenu || [];
     },
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
