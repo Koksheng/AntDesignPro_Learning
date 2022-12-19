@@ -51,6 +51,12 @@ export default [
     component: './TableList',
   },
   {
+    name: 'model-design',
+    icon: 'table',
+    path: '/basic-list/api/models/model-design/*',
+    component: './ModelDesign',
+  },
+  {
     name: 'single-page',
     icon: 'table',
     path: '/basic-list/api/*/*',
@@ -61,12 +67,6 @@ export default [
     icon: 'table',
     path: '/basic-list/*',
     component: './BasicList',
-  },
-  {
-    name: 'model-design',
-    icon: 'table',
-    path: '/modal-design/',
-    component: './ModelDesign',
   },
   {
     path: '/',

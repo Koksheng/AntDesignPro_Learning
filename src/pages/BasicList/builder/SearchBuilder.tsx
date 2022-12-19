@@ -53,7 +53,11 @@ const SearchBuilder = (data: BasicListApi.Field[] | undefined) => {
             <Form.Item {...basicAttr} valuePropName="checked">
               <Select>
                 {(field.data || []).map((option: any) => {
-                  return <Select.Option value={option.value} key={option.value}> {option.title}</Select.Option>;
+                  return (
+                    <Select.Option value={option.value} key={option.value}>
+                      {option.title}
+                    </Select.Option>
+                  );
                 })}
               </Select>
             </Form.Item>

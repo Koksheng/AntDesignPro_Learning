@@ -14,10 +14,7 @@ const Page = () => {
   const location = useLocation();
 
   const init = useRequest<{ data: BasicListApi.PageData }>(
-    `${location.pathname.replace(
-      '/basic-list',
-      '',
-    )}`,
+    `${location.pathname.replace('/basic-list', '')}`,
     {
       onError: () => {
         history.goBack();

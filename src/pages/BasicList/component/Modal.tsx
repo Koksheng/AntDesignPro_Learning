@@ -23,7 +23,7 @@ const Modal = ({
       onError: () => {
         hideModal();
       },
-    },
+    }
   );
 
   const request = useRequest(
@@ -34,7 +34,6 @@ const Modal = ({
         url: `${uri}`,
         method,
         data: {
-          //...formValues,
           ...submitFieldsAdaptor(formValues),
         },
       };
@@ -43,7 +42,7 @@ const Modal = ({
       manual: true,
       onSuccess: (data) => {
         message.success({
-          content: data?.message,
+          content: data.message,
           key: 'process',
         });
         hideModal(true);
@@ -77,7 +76,7 @@ const Modal = ({
     request.run(values);
   };
 
-  const actionHandler = (action: BasicListApi.Action) => {
+  function actionHandler(action: BasicListApi.Action) {
     switch (action.action) {
       case 'submit':
         form.setFieldsValue({ uri: action.uri, method: action.method });
@@ -89,10 +88,11 @@ const Modal = ({
       case 'reset':
         form.resetFields();
         break;
+
       default:
         break;
     }
-  };
+  }
   return (
     <div>
       <AntdModal
@@ -128,8 +128,7 @@ const Modal = ({
               </Form.Item>
             </Form>
             <Tag className={styles.formUpdateTime}>
-              Update Time:{' '}
-              {moment(init.data?.dataSource?.update_time).format('YYYY-MM-DD HH:mm:ss')}
+            Update Time: {moment(form.getFieldValue('update_time')).format('YYYY-MM-DD HH:mm:ss')}
             </Tag>
           </>
         )}
